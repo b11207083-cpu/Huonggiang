@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>範香江 | 魔法資管冒險者 (Pham Huong Giang)</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'mana-blue': '#48cae4',
+                        'hp-red': '#ff4d6d',
+                        'exp-green': '#38b000',
+                        'gold-accent': '#ffb703',
+                        'pixel-dark': '#2b1e3a',
+                        'pastel-bg': '#f3e8ff',
+                        'pastel-card': '#ffffff',
+                        'magic-purple': '#7209b7',
+                    },
+                    fontFamily: {
+                        pixel: ['"VT323"', 'monospace'],
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Pixel Art Styling & Custom CSS */
+        body {
+            background-color: #f3e8ff;
+            background-image: 
+                radial-gradient(#c084fc 1.5px, transparent 1.5px), 
+                radial-gradient(#c084fc 1.5px, #f3e8ff 1.5px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            color: #2b1e3a;
+            image-rendering: pixelated;
+        }
+
+        /* Pixel Borders Custom CSS */
+        .pixel-box {
+            position: relative;
+            background: #ffffff;
+            border: 4px solid #2b1e3a;
+            box-shadow: 6px 6px 0px #2b1e3a, 0 10px 25px -5px rgba(114, 9, 183, 0.15);
+            transition: all 0.2s ease;
+        }
+
+        .pixel-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 8px 10px 0px #2b1e3a, 0 15px 30px -5px rgba(114, 9, 183, 0.25);
+        }
+
+        .pixel-btn {
+            border: 3px solid #2b1e3a;
+            box-shadow: 3px 3px 0px #2b1e3a;
+            transition: all 0.1s ease;
+        }
+
+        .pixel-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #2b1e3a;
+        }
+
+        .pixel-bar {
+            border: 2px solid #2b1e3a;
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f3e8ff;
+            border-left: 2px solid #2b1e3a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #7209b7;
+            border: 2px solid #2b1e3a;
+        }
+
+        /* Particle Canvas Overlay */
+        #magic-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Pulse Animations */
+        @keyframes pixel-float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .floating-element {
+            animation: pixel-float 3s ease-in-out infinite;
+        }
+
+        /* Scanline Overlay for Arcade Feel */
+        .scanlines {
+            background: linear-gradient(
+                rgba(255,255,255,0) 50%, 
+                rgba(0, 0, 0, 0.03) 50%
+            );
+            background-size: 100% 4px;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen scanlines selection:bg-gold-accent selection:text-pixel-dark pb-12">
+
+    <!-- Particle Background Canvas -->
+    <canvas id="magic-canvas"></canvas>
+
+    <!-- Navigation Bar -->
+    <nav class="sticky top-4 z-50 max-w-5xl mx-auto px-4 mb-8">
+        <div class="pixel-box bg-white p-3 rounded-none flex justify-between items-center">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="playSynthSound('potion')">
+                <div class="w-8 h-8 bg-purple-600 text-white flex items-center justify-center font-pixel text-xl rounded-none border-2 border-pixel-dark">
+                    🧙‍♂️
+                </div>
+                <span class="font-pixel text-2xl font-bold text-magic-purple tracking-wider">GIANG.RPG</span>
+            </div>
+
+            <!-- Audio & Interactive Toggle Controls -->
+            <div class="flex items-center gap-3">
+                <button id="sound-btn" onclick="toggleAudio()" class="pixel-btn bg-gold-accent text-pixel-dark px-3 py-1 text-sm font-bold flex items-center gap-1 hover:bg-yellow-300">
+                    <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+                    <span class="hidden sm:inline font-pixel text-base">音效 ON</span>
+                </button>
+                <a href="#contact" class="pixel-btn bg-magic-purple text-white px-3 py-1 text-sm font-bold hover:bg-purple-700 font-pixel text-base">
+                    ⚔️ 聯絡我
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 space-y-12 relative z-20">
+
+        <!-- SECTION 1: HERO / RPG STATUS CARD -->
+        <section id="home" class="scroll-mt-24">
+            <div class="pixel-box p-6 md:p-8 bg-white relative overflow-hidden">
+                <!-- Decorative Badge -->
+                <div class="absolute -right-12 -top-12 bg-gold-accent text-pixel-dark w-36 h-36 rotate-45 flex items-end justify-center pb-2 font-pixel text-sm font-bold border-2 border-pixel-dark">
+                    LV.99 MAGE
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                    <!-- Character Avatar Column -->
+                    <div class="md:col-span-5 flex flex-col items-center text-center">
+                        <div class="relative group">
+                            <!-- Avatar Frame with Glow -->
+                            <div class="w-48 h-48 md:w-56 md:h-56 bg-gradient-to-br from-purple-200 to-pink-200 border-4 border-pixel-dark p-2 relative floating-element">
+                                <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=600&q=80" 
+                                     alt="範香江 (Pham Huong Giang)" 
+                                     class="w-full h-full object-cover border-2 border-pixel-dark bg-purple-100"
+                                     onerror="this.src='https://placehold.co/400x400/7209b7/ffffff?text=GIANG+AVATAR'">
+                                <div class="absolute -bottom-3 -right-3 bg-gold-accent border-2 border-pixel-dark p-2 text-xl">
+                                    🍳
+                                </div>
+                            </div>
+                        </div>
+                        <h2 class="mt-4 font-pixel text-3xl text-magic-purple font-bold">範香江</h2>
+                        <p class="text-sm text-gray-600 font-bold tracking-widest">PHAM HUONG GIANG</p>
+                        <span class="mt-2 inline-block bg-purple-100 text-magic-purple px-3 py-1 border border-magic-purple text-xs font-bold rounded-none">
+                            資訊管理學系 (MIS) 3年級
+                        </span>
+                    </div>
+
+                    <!-- RPG Attributes & Intro Column -->
+                    <div class="md:col-span-7 space-y-5">
+                        <div class="border-b-2 border-dashed border-purple-200 pb-3">
+                            <h1 class="text-2xl md:text-3xl font-bold text-pixel-dark flex items-center gap-2">
+                                <span>哈囉！我是</span>
+                                <span class="text-magic-purple underline decoration-gold-accent decoration-4">範香江</span>
+                                <span class="text-xl">✨</span>
+                            </h1>
+                            <!-- One sentence intro -->
+                            <div class="mt-3 p-3 bg-purple-50 border-2 border-pixel-dark font-bold text-magic-purple flex items-center gap-3">
+                                <span class="text-2xl animate-bounce">🍳</span>
+                                <p class="text-base md:text-lg">「我是一個喜歡煮飯的人！」</p>
+                            </div>
+                        </div>
+
+                        <!-- Interactive RPG Status Bars -->
+                        <div class="space-y-3 bg-gray-50 p-4 border-2 border-pixel-dark">
+                            <div class="font-pixel text-lg font-bold text-pixel-dark flex justify-between">
+                                <span><i class="fa-solid fa-heart text-hp-red"></i> HP (活力值):</span>
+                                <span id="hp-val">100 / 100</span>
+                            </div>
+                            <div class="pixel-bar w-full h-5 bg-gray-200 rounded-none overflow-hidden">
+                                <div id="hp-bar" class="h-full bg-hp-red transition-all duration-500" style="width: 100%;"></div>
+                            </div>
+
+                            <div class="font-pixel text-lg font-bold text-pixel-dark flex justify-between">
+                                <span><i class="fa-solid fa-bolt text-mana-blue"></i> MP (魔力/創意):</span>
+                                <span id="mp-val">85 / 100</span>
+                            </div>
+                            <div class="pixel-bar w-full h-5 bg-gray-200 rounded-none overflow-hidden">
+                                <div id="mp-bar" class="h-full bg-mana-blue transition-all duration-500" style="width: 85%;"></div>
+                            </div>
+
+                            <div class="font-pixel text-lg font-bold text-pixel-dark flex justify-between">
+                                <span><i class="fa-solid fa-star text-gold-accent"></i> EXP (資管經驗值):</span>
+                                <span id="exp-val">75%</span>
+                            </div>
+                            <div class="pixel-bar w-full h-5 bg-gray-200 rounded-none overflow-hidden">
+                                <div id="exp-bar" class="h-full bg-exp-green transition-all duration-500" style="width: 75%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-wrap gap-3 pt-2">
+                            <button onclick="gainExp()" class="pixel-btn bg-gold-accent hover:bg-yellow-400 text-pixel-dark font-bold px-4 py-2 flex items-center gap-2 text-sm">
+                                ⚡ 點擊修煉 (+EXP)
+                            </button>
+                            <button onclick="drinkPotion()" class="pixel-btn bg-mana-blue hover:bg-cyan-400 text-pixel-dark font-bold px-4 py-2 flex items-center gap-2 text-sm">
+                                🧪 喝下魔法藥水
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: ABOUT ME (關於我) -->
+        <section id="about" class="scroll-mt-24">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 bg-magic-purple text-white border-2 border-pixel-dark flex items-center justify-center font-pixel text-xl">
+                    📜
+                </div>
+                <h2 class="font-pixel text-3xl font-bold text-pixel-dark tracking-wide">ABOUT ME / 關於我</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Info Card 1 -->
+                <div class="pixel-box p-5 bg-white border-4 border-pixel-dark space-y-3">
+                    <div class="text-3xl">🎓</div>
+                    <h3 class="font-bold text-lg text-magic-purple border-b-2 border-pixel-dark pb-1">學術背景</h3>
+                    <p class="text-sm text-gray-700 leading-relaxed font-medium">
+                        就讀於<span class="font-bold text-pixel-dark">開南大學資訊管理學系</span>。專注於結合資訊科技與邏輯思考，探索雲端部署與網頁開發的魔法奧祕。
+                    </p>
+                </div>
+
+                <!-- Info Card 2 -->
+                <div class="pixel-box p-5 bg-white border-4 border-pixel-dark space-y-3">
+                    <div class="text-3xl">🍲</div>
+                    <h3 class="font-bold text-lg text-magic-purple border-b-2 border-pixel-dark pb-1">料理煉金術</h3>
+                    <p class="text-sm text-gray-700 leading-relaxed font-medium">
+                        對我來說，<span class="font-bold text-pixel-dark">煮飯就像調製魔法藥水</span>。用心挑選食材、精準掌控火候，將各種元素完美融合，帶給身邊的人滿滿的幸福與能量！
+                    </p>
+                </div>
+
+                <!-- Info Card 3 -->
+                <div class="pixel-box p-5 bg-white border-4 border-pixel-dark space-y-3">
+                    <div class="text-3xl">🌍</div>
+                    <h3 class="font-bold text-lg text-magic-purple border-b-2 border-pixel-dark pb-1">跨文化冒險</h3>
+                    <p class="text-sm text-gray-700 leading-relaxed font-medium">
+                        熱衷於與來自世界各地的朋友交流。透過溝通探索不同的思想地圖，拓展自己的視野與冒險地圖。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: INTERESTS & STRENGTHS (興趣 & 優勢) -->
+        <section id="skills" class="scroll-mt-24">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 bg-gold-accent text-pixel-dark border-2 border-pixel-dark flex items-center justify-center font-pixel text-xl">
+                    ⚔️
+                </div>
+                <h2 class="font-pixel text-3xl font-bold text-pixel-dark tracking-wide">SKILLS & ADVANTAGES / 興趣與優勢</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Interest Card -->
+                <div class="pixel-box p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-4 border-pixel-dark relative overflow-hidden">
+                    <div class="absolute top-2 right-2 font-pixel text-gray-300 text-6xl select-none opacity-40">
+                        TALK
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-14 h-14 bg-gold-accent border-2 border-pixel-dark flex items-center justify-center text-3xl shrink-0 floating-element">
+                            🌐
+                        </div>
+                        <div class="space-y-2">
+                            <span class="bg-amber-200 text-amber-900 px-2 py-0.5 text-xs font-bold border border-pixel-dark">
+                                被動技能 PASSIVE
+                            </span>
+                            <h3 class="font-bold text-xl text-pixel-dark">國際交流術 (Global Chat)</h3>
+                            <p class="text-sm font-bold text-magic-purple">【興趣】：喜歡跟外國朋友聊天</p>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                具備極強的親和力與開放心態，樂於用言語建立跨國界的橋樑。在交流中吸取多元文化靈感，增強團隊溝通力！
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strength Card -->
+                <div class="pixel-box p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-4 border-pixel-dark relative overflow-hidden">
+                    <div class="absolute top-2 right-2 font-pixel text-gray-300 text-6xl select-none opacity-40">
+                        FAST
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-14 h-14 bg-mana-blue border-2 border-pixel-dark flex items-center justify-center text-3xl shrink-0 floating-element" style="animation-delay: 0.5s;">
+                            ⚡
+                        </div>
+                        <div class="space-y-2">
+                            <span class="bg-cyan-200 text-cyan-900 px-2 py-0.5 text-xs font-bold border border-pixel-dark">
+                                主動天賦 ACTIVE
+                            </span>
+                            <h3 class="font-bold text-xl text-pixel-dark">快速神速領悟 (Rapid Mastery)</h3>
+                            <p class="text-sm font-bold text-magic-purple">【優勢】：學習能力強</p>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                面對新技術、新知識或全新的程式語言，能迅速解析邏輯並融會貫通。像高智商法師般快速學會新咒語！
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Special Skill: Cooking -->
+                <div class="pixel-box p-6 bg-gradient-to-br from-red-50 to-pink-50 border-4 border-pixel-dark relative overflow-hidden md:col-span-2">
+                    <div class="flex flex-col sm:flex-row items-center gap-5">
+                        <div class="w-20 h-20 bg-hp-red text-white border-2 border-pixel-dark flex items-center justify-center text-4xl shrink-0 floating-element" style="animation-delay: 1s;">
+                            🍳
+                        </div>
+                        <div class="space-y-2 text-center sm:text-left">
+                            <div class="flex items-center justify-center sm:justify-start gap-2">
+                                <span class="bg-red-200 text-red-900 px-2 py-0.5 text-xs font-bold border border-pixel-dark">
+                                    Ultimate Skill 終極專長
+                                </span>
+                                <span class="text-xs text-gold-accent font-bold">★★★★★</span>
+                            </div>
+                            <h3 class="font-bold text-2xl text-pixel-dark">頂級美味料理術 (Culinary Wizardry)</h3>
+                            <p class="text-sm text-gray-700 leading-relaxed max-w-2xl">
+                                「美味的食物能撫慰靈魂，也能激發無限創造力！」無論是台式家常菜還是異國料理實驗，都能端出一盤盤令人驚豔的美味佳餚。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 4: CONTACT (聯繫方式) -->
+        <section id="contact" class="scroll-mt-24">
+            <div class="pixel-box p-6 md:p-8 bg-white border-4 border-pixel-dark text-center space-y-6">
+                <div class="inline-block p-3 bg-purple-100 border-2 border-pixel-dark text-3xl">
+                    📬
+                </div>
+                <h2 class="font-pixel text-4xl font-bold text-magic-purple">CONNECT WITH ME / 聯繫方式</h2>
+                <p class="text-gray-600 max-w-md mx-auto text-sm font-medium">
+                    想要交流料理心得、語言學習，或是聊聊資訊管理專案嗎？歡迎透過以下傳送門發送飛鴿傳書給我！
+                </p>
+
+                <!-- Contact Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4">
+                    <!-- Email -->
+                    <a href="mailto:giang@example.com" onclick="playSynthSound('click')" class="pixel-btn p-4 bg-purple-50 hover:bg-purple-200 border-2 border-pixel-dark flex flex-col items-center gap-2 group">
+                        <i class="fa-solid fa-envelope text-2xl text-magic-purple group-hover:scale-110 transition-transform"></i>
+                        <span class="font-bold text-sm text-pixel-dark">E-Mail</span>
+                        <span class="text-xs text-gray-500 font-mono">b11207083@knu.edu.tw</span>
+                    </a>
+
+                    <!-- Instagram / Social -->
+                    <a href="https://instagram.com" target="_blank" onclick="playSynthSound('click')" class="pixel-btn p-4 bg-pink-50 hover:bg-pink-200 border-2 border-pixel-dark flex flex-col items-center gap-2 group">
+                        <i class="fa-brands fa-instagram text-2xl text-pink-600 group-hover:scale-110 transition-transform"></i>
+                        <span class="font-bold text-sm text-pixel-dark">Instagram</span>
+                        <span class="text-xs text-gray-500 font-mono">@giang_cooks</span>
+                    </a>
+
+                    <!-- GitHub / Portfolio -->
+                    <a href="https://github.com" target="_blank" onclick="playSynthSound('click')" class="pixel-btn p-4 bg-gray-50 hover:bg-gray-200 border-2 border-pixel-dark flex flex-col items-center gap-2 group">
+                        <i class="fa-brands fa-github text-2xl text-pixel-dark group-hover:scale-110 transition-transform"></i>
+                        <span class="font-bold text-sm text-pixel-dark">GitHub</span>
+                        <span class="text-xs text-gray-500 font-mono">@pham-huong-giang</span>
+                    </a>
+                </div>
+
+                <!-- Footer Message -->
+                <div class="pt-6 border-t border-gray-200 text-xs text-gray-500 font-pixel text-base">
+                    © 2026 範香江 PHAM HUONG GIANG • KNU MIS PORTFOLIO
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Interactive Logic -->
+    <script>
+        // Audio & Synth Setup (Web Audio API - No External Assets Needed)
+        let soundEnabled = true;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            const btn = document.getElementById('sound-btn');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                btn.classList.remove('bg-gray-300');
+                btn.classList.add('bg-gold-accent');
+                playSynthSound('potion');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+                btn.classList.remove('bg-gold-accent');
+                btn.classList.add('bg-gray-300');
+            }
+        }
+
+        function playSynthSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'levelup') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.setValueAtTime(400, now + 0.08);
+                    osc.frequency.setValueAtTime(523, now + 0.16);
+                    osc.frequency.setValueAtTime(659, now + 0.24);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'potion') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                }
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
+        }
+
+        // RPG Status Bar Interaction Logic
+        let currentExp = 75;
+        let currentMp = 85;
+
+        function gainExp() {
+            playSynthSound('levelup');
+            currentExp += 10;
+            if (currentExp > 100) {
+                currentExp = 100;
+                alert('🎉 恭喜！範香江 升級到了 LV.100 頂級魔法大廚！');
+                currentExp = 20; // reset
+            }
+            document.getElementById('exp-bar').style.width = currentExp + '%';
+            document.getElementById('exp-val').innerText = currentExp + '%';
+            createSparkles(window.innerWidth / 2, window.innerHeight / 2);
+        }
+
+        function drinkPotion() {
+            playSynthSound('potion');
+            currentMp = 100;
+            document.getElementById('mp-bar').style.width = '100%';
+            document.getElementById('mp-val').innerText = '100 / 100';
+            
+            // Temporary boost animation
+            const hpBar = document.getElementById('hp-bar');
+            hpBar.classList.add('brightness-125');
+            setTimeout(() => hpBar.classList.remove('brightness-125'), 500);
+        }
+
+        // Magical Particle Canvas Background
+        const canvas = document.getElementById('magic-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.size = Math.random() * 4 + 2;
+                this.speedX = (Math.random() - 0.5) * 1;
+                this.speedY = (Math.random() - 0.5) * 1 - 0.5;
+                this.color = ['#c084fc', '#ffb703', '#48cae4', '#ff4d6d'][Math.floor(Math.random() * 4)];
+                this.alpha = Math.random();
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.alpha -= 0.005;
+
+                if (this.alpha <= 0 || this.y < 0) {
+                    this.x = Math.random() * canvas.width;
+                    this.y = canvas.height + 10;
+                    this.alpha = Math.random();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                // Draw pixel square particle
+                ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 40; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function createSparkles(x, y) {
+            for (let i = 0; i < 15; i++) {
+                const p = new Particle(x, y);
+                p.speedX = (Math.random() - 0.5) * 6;
+                p.speedY = (Math.random() - 0.5) * 6;
+                particles.push(p);
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        initParticles();
+        animateParticles();
+    </script>
+</body>
+</html>
